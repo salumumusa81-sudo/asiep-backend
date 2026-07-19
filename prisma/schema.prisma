@@ -1,0 +1,747 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── USERS ───────────────────────────────────────────────────────────────────
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  username      String    @unique
+  avatar        String?
+  bio           String?
+  university    String?
+  country       String?
+  role          UserRole  @default(STUDENT)
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  projects          Project[]
+  ipCertificates    IpCertificate[]
+  projectComments   ProjectComment[]
+  challengeEntries  ChallengeEntry[]
+  mentorships       Mentorship[]     @relation("MentorRelation")
+  menteeships       Mentorship[]     @relation("MenteeRelation")
+  skills            UserSkill[]
+  notifications     Notification[]
+  badges            UserBadge[]
+  feedPosts         FeedPost[]
+  feedComments      FeedComment[]
+  feedLikes         FeedLike[]
+  grantApplications GrantApplication[]
+  datasetRatings    DatasetRating[]
+  datasetAccess     DatasetAccessRequest[]
+  universityAdmin   UniversityAdmin?
+  startups          Startup[]
+  investorInterests InvestorInterest[]
+  userPoints        UserPoints?
+  pointHistory      PointHistory[]
+  discussionThreads DiscussionThread[]
+  discussionReplies DiscussionReply[]
+  threadVotes       ThreadVote[]
+  replyVotes        ReplyVote[]
+  conversations     ConversationParticipant[]
+  sentMessages      Message[]
+  createdChallenges Challenge[]
+  reviewedEntries   ChallengeEntry[] @relation("ReviewedEntries")
+  workspaceFiles    WorkspaceFile[]
+  datasets          Dataset[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  STUDENT
+  MENTOR
+  INVESTOR
+  COMPANY
+  ADMIN
+}
+
+// ─── PROJECTS ────────────────────────────────────────────────────────────────
+model Project {
+  id          String        @id @default(uuid())
+  title       String
+  description String
+  repoUrl     String?
+  demoUrl     String?
+  imageUrl    String?
+  status      ProjectStatus @default(DRAFT)
+  views       Int           @default(0)
+  likes       Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  authorId    String
+
+  author           User                       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tags             ProjectTag[]
+  collaborators    ProjectCollaborator[]
+  comments         ProjectComment[]
+  ipCertificate    IpCertificate?
+  feedPosts        FeedPost[]
+  challengeEntries ChallengeEntry[]
+  featuredBy       UniversityFeaturedProject[]
+
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model IpCertificate {
+  id        String   @id @default(uuid())
+  hash      String   @unique
+  metadata  Json
+  issuedAt  DateTime @default(now())
+  projectId String   @unique
+  userId    String
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ip_certificates")
+}
+
+model Tag {
+  id       String       @id @default(uuid())
+  name     String       @unique
+  projects ProjectTag[]
+
+  @@map("tags")
+}
+
+model ProjectTag {
+  id        String  @id @default(uuid())
+  projectId String
+  tagId     String
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, tagId])
+  @@map("project_tags")
+}
+
+model ProjectCollaborator {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  role      String   @default("COLLABORATOR")
+  joinedAt  DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_collaborators")
+}
+
+model ProjectComment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  projectId String
+  authorId  String
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("project_comments")
+}
+
+// ─── CHALLENGES ──────────────────────────────────────────────────────────────
+model Challenge {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  prize       Float
+  deadline    DateTime
+  company     String
+  category    String?
+  tags        String[]
+  logoUrl     String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdById String
+
+  createdBy   User               @relation(fields: [createdById], references: [id])
+  entries     ChallengeEntry[]
+  workspace   ChallengeWorkspace?
+
+  @@map("challenges")
+}
+
+model ChallengeEntry {
+  id           String      @id @default(uuid())
+  status       EntryStatus @default(REGISTERED)
+  projectUrl   String?
+  note         String?
+  score        Float?
+  reviewNote   String?
+  submittedAt  DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  reviewedAt   DateTime?
+  challengeId  String
+  userId       String
+  projectId    String?
+  reviewedById String?
+
+  challenge    Challenge   @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy   User?       @relation("ReviewedEntries", fields: [reviewedById], references: [id])
+  project      Project?    @relation(fields: [projectId], references: [id])
+
+  @@unique([challengeId, userId])
+  @@map("challenge_entries")
+}
+
+enum EntryStatus {
+  REGISTERED
+  SUBMITTED
+  WINNER
+  SHORTLISTED
+  DISQUALIFIED
+}
+
+model ChallengeWorkspace {
+  id          String    @id @default(uuid())
+  challengeId String    @unique
+  config      Json      @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  challenge   Challenge           @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  resources   WorkspaceResource[]
+  files       WorkspaceFile[]
+
+  @@map("challenge_workspaces")
+}
+
+model WorkspaceResource {
+  id          String             @id @default(uuid())
+  title       String
+  url         String
+  type        String
+  workspaceId String
+
+  workspace   ChallengeWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("workspace_resources")
+}
+
+model WorkspaceFile {
+  id          String             @id @default(uuid())
+  name        String
+  content     String             @default("")
+  language    String             @default("javascript")
+  workspaceId String
+  userId      String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  workspace   ChallengeWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId, name])
+  @@map("workspace_files")
+}
+
+// ─── MENTORSHIP ──────────────────────────────────────────────────────────────
+model Mentorship {
+  id        String           @id @default(uuid())
+  status    MentorshipStatus @default(PENDING)
+  message   String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  mentorId  String
+  menteeId  String
+
+  mentor    User             @relation("MentorRelation", fields: [mentorId], references: [id])
+  mentee    User             @relation("MenteeRelation", fields: [menteeId], references: [id])
+
+  @@unique([mentorId, menteeId])
+  @@map("mentorships")
+}
+
+enum MentorshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+}
+
+model Skill {
+  id    String      @id @default(uuid())
+  name  String      @unique
+  users UserSkill[]
+
+  @@map("skills")
+}
+
+model UserSkill {
+  id      String @id @default(uuid())
+  userId  String
+  skillId String
+
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillId])
+  @@map("user_skills")
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+model Notification {
+  id        String   @id @default(uuid())
+  type      String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// ─── BADGES ──────────────────────────────────────────────────────────────────
+model Badge {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String
+  icon        String
+  category    String
+  condition   Json
+  createdAt   DateTime    @default(now())
+
+  users       UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id       String   @id @default(uuid())
+  earnedAt DateTime @default(now())
+  userId   String
+  badgeId  String
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+// ─── FEED ────────────────────────────────────────────────────────────────────
+model FeedPost {
+  id        String       @id @default(uuid())
+  content   String
+  type      FeedPostType @default(UPDATE)
+  image     String?
+  likes     Int          @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  authorId  String
+  projectId String?
+
+  author    User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  project   Project?     @relation(fields: [projectId], references: [id])
+  comments  FeedComment[]
+  feedLikes FeedLike[]
+
+  @@map("feed_posts")
+}
+
+enum FeedPostType {
+  UPDATE
+  MILESTONE
+  QUESTION
+  SHOWCASE
+  OPPORTUNITY
+}
+
+model FeedComment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  postId    String
+  authorId  String
+
+  post      FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("feed_comments")
+}
+
+model FeedLike {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  postId    String
+  userId    String
+
+  post      FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("feed_likes")
+}
+
+// ─── GRANTS ──────────────────────────────────────────────────────────────────
+model SponsorGrant {
+  id            String             @id @default(uuid())
+  title         String
+  description   String
+  amount        Float
+  deadline      DateTime
+  category      String
+  requirements  String?
+  maxApplicants Int                @default(100)
+  status        GrantStatus        @default(OPEN)
+  sponsorName   String
+  sponsorLogo   String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  applications  GrantApplication[]
+
+  @@map("sponsor_grants")
+}
+
+enum GrantStatus {
+  OPEN
+  CLOSED
+  AWARDED
+}
+
+model GrantApplication {
+  id          String            @id @default(uuid())
+  pitch       String
+  projectUrl  String?
+  status      ApplicationStatus @default(PENDING)
+  submittedAt DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  grantId     String
+  userId      String
+
+  grant       SponsorGrant      @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([grantId, userId])
+  @@map("grant_applications")
+}
+
+enum ApplicationStatus {
+  PENDING
+  SHORTLISTED
+  APPROVED
+  REJECTED
+}
+
+// ─── DATASETS ────────────────────────────────────────────────────────────────
+model Dataset {
+  id             String                 @id @default(uuid())
+  title          String
+  description    String
+  category       String
+  language       String?
+  size           String?
+  format         String?
+  downloadUrl    String?
+  license        String                 @default("CC BY 4.0")
+  downloads      Int                    @default(0)
+  isPublic       Boolean                @default(true)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  uploaderId     String
+
+  uploader       User                   @relation(fields: [uploaderId], references: [id])
+  ratings        DatasetRating[]
+  accessRequests DatasetAccessRequest[]
+
+  @@map("datasets")
+}
+
+model DatasetRating {
+  id        String   @id @default(uuid())
+  rating    Int
+  review    String?
+  createdAt DateTime @default(now())
+  datasetId String
+  userId    String
+
+  dataset   Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([datasetId, userId])
+  @@map("dataset_ratings")
+}
+
+model DatasetAccessRequest {
+  id        String   @id @default(uuid())
+  reason    String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  datasetId String
+  userId    String
+
+  dataset   Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([datasetId, userId])
+  @@map("dataset_access_requests")
+}
+
+// ─── UNIVERSITIES ─────────────────────────────────────────────────────────────
+model University {
+  id               String                     @id @default(uuid())
+  name             String                     @unique
+  country          String
+  logo             String?
+  website          String?
+  createdAt        DateTime                   @default(now())
+
+  admins           UniversityAdmin[]
+  featuredProjects UniversityFeaturedProject[]
+
+  @@map("universities")
+}
+
+model UniversityAdmin {
+  id           String     @id @default(uuid())
+  userId       String     @unique
+  universityId String
+
+  user         User       @relation(fields: [userId], references: [id])
+  university   University @relation(fields: [universityId], references: [id])
+
+  @@map("university_admins")
+}
+
+model UniversityFeaturedProject {
+  id           String     @id @default(uuid())
+  projectId    String
+  universityId String
+  featuredAt   DateTime   @default(now())
+
+  project      Project    @relation(fields: [projectId], references: [id])
+  university   University @relation(fields: [universityId], references: [id])
+
+  @@unique([projectId, universityId])
+  @@map("university_featured_projects")
+}
+
+// ─── STARTUPS ─────────────────────────────────────────────────────────────────
+model Startup {
+  id            String           @id @default(uuid())
+  name          String
+  tagline       String
+  description   String
+  sector        String
+  country       String
+  stage         StartupStage     @default(IDEA)
+  fundingGoal   Float?
+  fundingRaised Float            @default(0)
+  equity        Float?
+  website       String?
+  pitchDeckUrl  String?
+  logoUrl       String?
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  founderId     String
+
+  founder       User             @relation(fields: [founderId], references: [id])
+  coFounders    StartupCoFounder[]
+  milestones    StartupMilestone[]
+  interests     InvestorInterest[]
+
+  @@map("startups")
+}
+
+enum StartupStage {
+  IDEA
+  MVP
+  BETA
+  LAUNCHED
+  SCALING
+  FUNDED
+}
+
+model StartupCoFounder {
+  id        String  @id @default(uuid())
+  startupId String
+  name      String
+  role      String
+  email     String?
+
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+
+  @@map("startup_cofounders")
+}
+
+model StartupMilestone {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  achievedAt  DateTime
+  startupId   String
+
+  startup     Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+
+  @@map("startup_milestones")
+}
+
+model InvestorInterest {
+  id        String   @id @default(uuid())
+  message   String
+  amount    Float?
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  startupId String
+  userId    String
+
+  startup   Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([startupId, userId])
+  @@map("investor_interests")
+}
+
+// ─── POINTS & GAMIFICATION ───────────────────────────────────────────────────
+model UserPoints {
+  id        String   @id @default(uuid())
+  points    Int      @default(0)
+  streak    Int      @default(0)
+  lastLogin DateTime @default(now())
+  userId    String   @unique
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_points")
+}
+
+model PointHistory {
+  id        String   @id @default(uuid())
+  points    Int
+  action    String
+  note      String?
+  createdAt DateTime @default(now())
+  userId    String
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("point_history")
+}
+
+// ─── DISCUSSION ───────────────────────────────────────────────────────────────
+model DiscussionThread {
+  id          String            @id @default(uuid())
+  title       String
+  content     String
+  isPinned    Boolean           @default(false)
+  isLocked    Boolean           @default(false)
+  views       Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  authorId    String
+  challengeId String?
+
+  author      User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies     DiscussionReply[]
+  votes       ThreadVote[]
+
+  @@map("discussion_threads")
+}
+
+model DiscussionReply {
+  id        String           @id @default(uuid())
+  content   String
+  isAnswer  Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  threadId  String
+  authorId  String
+
+  thread    DiscussionThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author    User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  votes     ReplyVote[]
+
+  @@map("discussion_replies")
+}
+
+model ThreadVote {
+  id       String           @id @default(uuid())
+  value    Int
+  threadId String
+  userId   String
+
+  thread   DiscussionThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+  @@map("thread_votes")
+}
+
+model ReplyVote {
+  id      String          @id @default(uuid())
+  value   Int
+  replyId String
+  userId  String
+
+  reply   DiscussionReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([replyId, userId])
+  @@map("reply_votes")
+}
+
+// ─── MESSAGING ────────────────────────────────────────────────────────────────
+model Conversation {
+  id           String                    @id @default(uuid())
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  userId         String
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  content        String
+  type           String       @default("TEXT")
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  conversationId String
+  senderId       String
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
