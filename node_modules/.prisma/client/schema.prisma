@@ -71,6 +71,7 @@ model Project {
   id          String        @id @default(uuid())
   title       String
   description String        @db.Text
+  fullContent String?       @db.Text
   repoUrl     String?       @db.Text
   demoUrl     String?       @db.Text
   imageUrl    String?
