@@ -103,9 +103,9 @@ enum ProjectStatus {
 
 model IpCertificate {
   id            String   @id @default(uuid())
-  hash          String?  @unique
-  contentHash   String?  @unique
-  certificateId String?  @unique
+  hash          String?  
+  contentHash   String?  
+  certificateId String?  
   metadata      Json
   issuedAt      DateTime @default(now())
   projectId     String   @unique
@@ -113,6 +113,7 @@ model IpCertificate {
   ownerId       String?
 
   project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("ip_certificates")
 }
