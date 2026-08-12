@@ -45,7 +45,7 @@ const getProject = async (req, res, next) => {
       include: {
         author: { select: { id: true, name: true, username: true, avatar: true, university: true, bio: true } },
         tags: { include: { tag: true } },
-        collaborators: { include: { user: { select: { id: true, name: true, username: true, avatar: true } } } },
+        collaborators: true,
         ipCertificate: true,
         comments: {
           include: { author: { select: { id: true, name: true, username: true, avatar: true } } },
