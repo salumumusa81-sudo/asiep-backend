@@ -75,6 +75,7 @@ model Project {
   repoUrl     String?       @db.Text
   demoUrl     String?       @db.Text
   imageUrl    String?
+  visibility  String        @default("PUBLIC")
   status      ProjectStatus @default(DRAFT)
   views       Int           @default(0)
   likes       Int           @default(0)
