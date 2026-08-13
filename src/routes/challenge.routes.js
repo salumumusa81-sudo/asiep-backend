@@ -8,29 +8,25 @@ const {
   deleteChallenge,
   enterChallenge,
   submitSolution,
-  getEntries,
-  updateEntryStatus,
-  getMyChallenges,
-  getChallengeStats,
+  getMyEntries,
   getLeaderboard,
+  reviewEntry,
 } = require('../controllers/challenge.controller');
 
 // ── Public ────────────────────────────────────────────────────────────────────
 router.get('/', getChallenges);
-router.get('/my/entries', protect, getMyChallenges);
+router.get('/my/entries', protect, getMyEntries);
 router.get('/:id', getChallenge);
-router.get('/:id/leaderboard', protect, getLeaderboard);
-router.get('/:id/stats', protect, requireRole('COMPANY','ADMIN'), getChallengeStats);
-router.get('/:id/entries', protect, requireRole('COMPANY','ADMIN'), getEntries);
+router.get('/:id/leaderboard', getLeaderboard);
 
 // ── Student ───────────────────────────────────────────────────────────────────
-router.post('/:id/enter', protect, enterChallenge);
+router.post('/:id/join', protect, enterChallenge);
 router.post('/:id/submit', protect, submitSolution);
 
 // ── Company & Admin ───────────────────────────────────────────────────────────
 router.post('/', protect, requireRole('COMPANY','ADMIN'), createChallenge);
 router.put('/:id', protect, requireRole('COMPANY','ADMIN'), updateChallenge);
-router.put('/:id/entries/:entryId', protect, requireRole('COMPANY','ADMIN'), updateEntryStatus);
+router.put('/:id/entries/:entryId/review', protect, requireRole('COMPANY','ADMIN'), reviewEntry);
 
 // ── Admin only ────────────────────────────────────────────────────────────────
 router.delete('/:id', protect, requireRole('ADMIN'), deleteChallenge);
