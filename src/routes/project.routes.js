@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { body } = require('express-validator');
 const {
   getProjects, getProject, createProject, updateProject,
-  deleteProject, likeProject, getMyProjects, addComment, getComments
+  deleteProject, likeProject, getMyProjects, addComment, getUserProjects
 } = require('../controllers/project.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { validate } = require('../middleware/validate.middleware');
@@ -13,11 +13,10 @@ router.get('/my', protect, getMyProjects);
 
 // ── Dynamic routes ────────────────────────────────────────────────────────────
 router.get('/:id', getProject);
-router.get('/:id/comments', getComments);
 
 router.post('/', protect, [
-  body('title').trim().notEmpty().withMessage('Kichwa cha mradi kinahitajika'),
-  body('description').trim().notEmpty().withMessage('Maelezo yanahitajika'),
+  body('title').trim().notEmpty().withMessage('Title is required'),
+  body('description').trim().notEmpty().withMessage('Description is required'),
   validate,
 ], createProject);
 
