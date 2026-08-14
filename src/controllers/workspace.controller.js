@@ -25,9 +25,9 @@ const getWorkspace = async (req, res, next) => {
 
     // Get files za user huyu tu
     const resources = await prisma.workspaceResource.findMany({
-      where: { workspaceId: workspace.id },
-      orderBy: { createdAt: 'asc' },
-    });
+  where: { workspaceId: workspace.id },
+  orderBy: { id: 'asc' },
+});
 
     res.json({ workspace, challenge: entry.challenge, resources });
   } catch(err) { next(err); }
