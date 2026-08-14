@@ -11,22 +11,21 @@ const getWorkspace = async (req, res, next) => {
       where: { challengeId_userId: { challengeId, userId } },
       include: { challenge: true },
     });
-    if (!entry) return res.status(403).json({ error: 'Jiunge na challenge kwanza' });
+    if (!entry) return res.status(403).json({ error: 'You have not joined this challenge yet' });
 
-    // Get au create workspace
+    // Get au create workspace — shared workspace kwa challenge
     let workspace = await prisma.challengeWorkspace.findUnique({
-      where: { challengeId_userId: { challengeId, userId } },
+      where: { challengeId },
     });
-
     if (!workspace) {
       workspace = await prisma.challengeWorkspace.create({
-        data: { challengeId, userId, code: getStarterCode('javascript'), language: 'javascript' },
+        data: { challengeId, config: {} },
       });
     }
 
-    // Get resources
+    // Get files za user huyu tu
     const resources = await prisma.workspaceResource.findMany({
-      where: { challengeId },
+      where: { workspaceId: workspace.id },
       orderBy: { createdAt: 'asc' },
     });
 
@@ -39,15 +38,14 @@ const saveWorkspace = async (req, res, next) => {
   try {
     const { challengeId } = req.params;
     const { code, language, notes } = req.body;
-    const userId = req.user.id;
 
     const workspace = await prisma.challengeWorkspace.upsert({
-      where: { challengeId_userId: { challengeId, userId } },
-      update: { code, language, notes, lastSaved: new Date() },
-      create: { challengeId, userId, code, language, notes },
+      where: { challengeId },
+      update: { updatedAt: new Date() },
+      create: { challengeId, config: {} },
     });
 
-    res.json({ message: 'Imehifadhiwa!', workspace });
+    res.json({ message: 'Saved!', workspace });
   } catch(err) { next(err); }
 };
 
