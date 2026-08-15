@@ -85,7 +85,7 @@ const applyForGrant = async (req, res, next) => {
 const getMyApplications = async (req, res, next) => {
   try {
     const applications = await prisma.grantApplication.findMany({
-      where: { applicantId: req.user.id },
+      where: { userId: req.user.id },
       include: { grant: true },
       orderBy: { submittedAt: 'desc' },
     });
