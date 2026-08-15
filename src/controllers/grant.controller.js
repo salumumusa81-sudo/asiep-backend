@@ -32,7 +32,7 @@ const getGrant = async (req, res, next) => {
       where: { id: req.params.id },
       include: { _count: { select: { applications: true } } },
     });
-    if (!grant) return res.status(404).json({ error: 'Grant haipatikani' });
+    if (!grant) return res.status(404).json({ error: 'Grant not found' });
     res.json({ grant });
   } catch (err) { next(err); }
 };
@@ -41,39 +41,42 @@ const getGrant = async (req, res, next) => {
 const applyForGrant = async (req, res, next) => {
   try {
     const { pitch, projectUrl } = req.body;
-    if (!pitch) return res.status(400).json({ error: 'Pitch inahitajika' });
+    if (!pitch) return res.status(400).json({ error: 'Pitch is required' });
 
     const grant = await prisma.sponsorGrant.findUnique({ where: { id: req.params.id } });
-    if (!grant) return res.status(404).json({ error: 'Grant haipatikani' });
-    if (grant.status !== 'OPEN') return res.status(400).json({ error: 'Grant imefungwa' });
+    if (!grant) return res.status(404).json({ error: 'Grant not found' });
+    if (grant.status !== 'OPEN') return res.status(400).json({ error: 'Grant is closed' });
 
     const application = await prisma.grantApplication.create({
       data: {
         pitch,
         projectUrl: projectUrl || null,
         grantId: req.params.id,
-        applicantId: req.user.id,
+        userId: req.user.id,
       },
       include: {
         grant: { select: { title: true, amount: true, sponsorName: true } },
       },
     });
 
-    await prisma.notification.create({
-      data: {
-        userId: req.user.id,
-        type: 'GRANT',
-        message: `✅ Ombi lako kwa "${grant.title}" la ${grant.sponsorName} limepokelewa!`,
-        link: '/marketplace',
-      },
-    });
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: req.user.id,
+          type: 'GRANT',
+          message: `✅ Your application for "${grant.title}" by ${grant.sponsorName} has been received!`,
+          link: '/marketplace',
+        },
+      });
+    } catch(e) {}
 
-    // ── Points ──
-    try { await addPoints(req.user.id, 'GRANT_APPLY', `Umeomba grant: ${grant.title}`); } catch(e) {}
+    try {
+      await addPoints(req.user.id, 30, 'GRANT_APPLY', `Applied for grant: ${grant.title}`);
+    } catch(e) {}
 
-    res.status(201).json({ message: 'Ombi limetumwa!', application });
+    res.status(201).json({ message: 'Application submitted successfully!', application });
   } catch (err) {
-    if (err.code === 'P2002') return res.status(409).json({ error: 'Umeshatuma ombi kwa grant hii' });
+    if (err.code === 'P2002') return res.status(409).json({ error: 'You have already applied for this grant' });
     next(err);
   }
 };
