@@ -136,15 +136,15 @@ const updateApplicationStatus = async (req, res, next) => {
     });
 
     const msgs = {
-      APPROVED: `🎉 Hongera! Ombi lako la "${application.grant.title}" limeidhinishwa! $${application.grant.amount.toLocaleString()} inakuja!`,
-      SHORTLISTED: `⭐ Ombi lako la "${application.grant.title}" limechaguliwa!`,
-      REJECTED: `❌ Ombi lako la "${application.grant.title}" halijakubaliwa.`,
-    };
+  APPROVED: `🎉 Congratulations! Your application for "${application.grant.title}" has been approved! $${application.grant.amount?.toLocaleString()} is coming your way!`,
+  SHORTLISTED: `⭐ Your application for "${application.grant.title}" has been shortlisted!`,
+  REJECTED: `❌ Your application for "${application.grant.title}" was not selected this time.`,
+};
 
     if (msgs[status]) {
       await prisma.notification.create({
         data: {
-          userId: application.applicant.id,
+          userId: application.user.id,
           type: 'GRANT_STATUS',
           message: msgs[status],
           link: '/marketplace',
