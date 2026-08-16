@@ -17,7 +17,7 @@ router.get('/:username', async (req, res, next) => {
           include: { tags: { include: { tag: true } }, ipCertificate: { select: { certificateId: true } } },
           orderBy: { createdAt: 'desc' },
         },
-        _count: { select: { projects: true, collaborations: true } },
+        _count: { select: { projects: true } },
       },
     });
     if (!user) return res.status(404).json({ error: 'Mtumiaji hapatikani' });
@@ -48,6 +48,29 @@ router.put('/profile', protect, async (req, res, next) => {
       select: { id:true, name:true, username:true, bio:true, university:true, country:true, role:true },
     });
     res.json({ message: 'Profile imesasishwa!', user });
+  } catch(err) { next(err); }
+});
+
+// Search users — LAZIMA iwe kabla ya /:username
+router.get('/search', protect, async (req, res, next) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.length < 2) return res.json({ users: [] });
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { username: { contains: q, mode: 'insensitive' } },
+        ],
+        NOT: { id: req.user.id },
+      },
+      select: {
+        id: true, name: true, username: true,
+        avatar: true, role: true, university: true, isVerified: true,
+      },
+      take: 10,
+    });
+    res.json({ users });
   } catch(err) { next(err); }
 });
 
