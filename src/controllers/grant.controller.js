@@ -130,9 +130,9 @@ const updateApplicationStatus = async (req, res, next) => {
       where: { id: applicationId },
       data: { status },
       include: {
-        applicant: { select: { id: true, name: true } },
-        grant: { select: { title: true, amount: true } },
-      },
+  user: { select: { id: true, name: true } },
+  grant: { select: { title: true, amount: true } },
+},
     });
 
     const msgs = {
@@ -168,7 +168,7 @@ const getGrantApplications = async (req, res, next) => {
       where: { grantId: req.params.id },
       include: {
   user: { select: { id:true, name:true, university:true, country:true, avatar:true } },
-},
+       },
       orderBy: { submittedAt: 'desc' },
     });
     res.json({ applications });
