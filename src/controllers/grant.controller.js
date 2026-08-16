@@ -167,8 +167,8 @@ const getGrantApplications = async (req, res, next) => {
     const applications = await prisma.grantApplication.findMany({
       where: { grantId: req.params.id },
       include: {
-        applicant: { select: { id:true, name:true, university:true, country:true, avatar:true } },
-      },
+  user: { select: { id:true, name:true, university:true, country:true, avatar:true } },
+},
       orderBy: { submittedAt: 'desc' },
     });
     res.json({ applications });
