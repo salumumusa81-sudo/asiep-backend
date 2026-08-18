@@ -49,25 +49,24 @@ const getStartup = async (req, res, next) => {
 // Create startup
 const createStartup = async (req, res, next) => {
   try {
-    const { name, tagline, description, stage, sector, country, website, demoUrl, fundingGoal, equity, projectId } = req.body;
+    const { name, tagline, description, stage, sector, country, website, fundingGoal, equity } = req.body;
     if (!name||!tagline||!description) return res.status(400).json({ error: 'Jina, tagline, na maelezo vinahitajika' });
 
     const startup = await prisma.startup.create({
       data: {
-        name, tagline, description,
-        stage: stage||'IDEA', sector, country,
-        website, demoUrl, fundingGoal, equity,
-        projectId: projectId||null,
-        founderId: req.user.id,
+  name, tagline, description,
+  stage: stage||'IDEA', sector, country,
+  website, fundingGoal, equity,
+  founderId: req.user.id,
         milestones: {
-          create: [
-            { title:'Unda MVP (Toleo la Msingi)', status:'PENDING' },
-            { title:'Pata watumiaji wa kwanza 100', status:'PENDING' },
-            { title:'Thibitisha mapato ya kwanza', status:'PENDING' },
-            { title:'Omba ufadhili wa kwanza', status:'PENDING' },
-            { title:'Pata wawekezaji wa seed round', status:'PENDING' },
-          ],
-        },
+  create: [
+    { title:'Build MVP', achievedAt: new Date(Date.now() + 90*24*60*60*1000) },
+    { title:'Get first 100 users', achievedAt: new Date(Date.now() + 180*24*60*60*1000) },
+    { title:'Validate first revenue', achievedAt: new Date(Date.now() + 270*24*60*60*1000) },
+    { title:'Apply for first funding', achievedAt: new Date(Date.now() + 365*24*60*60*1000) },
+    { title:'Get seed round investors', achievedAt: new Date(Date.now() + 540*24*60*60*1000) },
+  ],
+},
       },
       include: {
         founder: { select: userSelect },
@@ -79,12 +78,12 @@ const createStartup = async (req, res, next) => {
     await prisma.notification.create({
       data: {
         userId: req.user.id, type:'STARTUP',
-        message:`🚀 Startup yako "${name}" imesajiliwa kwenye ASIEP Launchpad! Wawekezaji wanaweza kukuona sasa.`,
+        message:`🚀 Your startup "${name}" has been registered on ASIEP Launchpad! Investors can now discover you.`,
         link: `/launchpad/${startup.id}`,
       },
     });
 
-    res.status(201).json({ message:'Startup imesajiliwa! 🚀', startup });
+    res.status(201).json({ message:'Startup registered successfully! 🚀', startup });
   } catch(err) { next(err); }
 };
 
