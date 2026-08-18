@@ -231,16 +231,16 @@ const deleteMessage = async (req, res, next) => {
     const userId = req.user.id;
 
     const message = await prisma.message.findUnique({ where: { id: messageId } });
-    if (!message) return res.status(404).json({ error: 'Ujumbe haupatikani' });
-    if (message.senderId !== userId) return res.status(403).json({ error: 'Huna ruhusa ya kufuta ujumbe huu' });
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+    if (message.senderId !== userId) return res.status(403).json({ error: 'Not authorized to delete this message' });
 
     // Soft delete — replace content
     await prisma.message.update({
       where: { id: messageId },
-      data: { content: '🗑 Ujumbe umefutwa', type: 'SYSTEM' },
+      data: { content: '🗑 Message deleted', type: 'SYSTEM' },
     });
 
-    res.json({ message: 'Ujumbe umefutwa!' });
+    res.json({ message: 'Message deleted!' });
   } catch(err) { next(err); }
 };
 
