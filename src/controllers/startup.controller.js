@@ -19,7 +19,7 @@ const getStartups = async (req, res, next) => {
         include: {
           founder: { select: userSelect },
           coFounders: true,
-          _count: { select: { milestones:true, investorInterests:true } },
+          _count: { select: { milestones: true, interests: true } },
         },
       }),
       prisma.startup.count({ where }),
