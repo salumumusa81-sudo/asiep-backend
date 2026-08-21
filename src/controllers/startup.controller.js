@@ -114,7 +114,7 @@ const expressInterest = async (req, res, next) => {
     await prisma.notification.create({
       data: {
         userId: startup.founderId, type:'INVESTOR',
-        message:`💰 Mwekezaji ametoa nia ya kuwekeza kwenye "${startup.name}"! ${amount?`Kiasi: $${amount.toLocaleString()}`:''}`,
+        message:`💰 An investor has expressed interest in "${startup.name}"! ${amount?`Amount: $${Number(amount).toLocaleString()}`:''}`,
         link: `/launchpad/${startup.id}`,
       },
     });
