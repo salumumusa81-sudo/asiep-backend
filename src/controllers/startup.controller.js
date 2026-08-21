@@ -18,7 +18,7 @@ const getStartups = async (req, res, next) => {
         orderBy: { createdAt: 'desc' },
         include: {
           founder: { select: userSelect },
-          coFounders: { include: { user: { select: userSelect } } },
+          coFounders: true,
           _count: { select: { milestones:true, investorInterests:true } },
         },
       }),
