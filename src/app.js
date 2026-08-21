@@ -15,6 +15,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://dancing-marigold-170d06.netlify.app',
   'https://prismatic-nougat-a0b684.netlify.app',
+  'https://singular-florentine-b71e8f.netlify.app',
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
