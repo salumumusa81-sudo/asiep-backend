@@ -8,7 +8,7 @@ const getStartups = async (req, res, next) => {
     const { stage, sector, page=1, limit=12 } = req.query;
     const skip = (Number(page)-1) * Number(limit);
     const where = {
-      isPublic: true,
+      isActive: true,
       ...(stage && { stage }),
       ...(sector && { sector }),
     };
