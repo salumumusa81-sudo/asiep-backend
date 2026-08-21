@@ -3,28 +3,25 @@ const prisma = require('../config/db');
 const userSelect = { id:true, name:true, username:true, avatar:true, university:true };
 
 // Get all startups
-const getStartups = async (req, res, next) => {
+const getStartup = async (req, res, next) => {
   try {
-    const { stage, sector, page=1, limit=12 } = req.query;
-    const skip = (Number(page)-1) * Number(limit);
-    const where = {
-      isActive: true,
-      ...(stage && { stage }),
-      ...(sector && { sector }),
-    };
-    const [startups, total] = await Promise.all([
-      prisma.startup.findMany({
-        where, skip, take: Number(limit),
-        orderBy: { createdAt: 'desc' },
-        include: {
-          founder: { select: userSelect },
-          coFounders: true,
-          _count: { select: { milestones: true, interests: true } },
+    const startup = await prisma.startup.findUnique({
+      where: { id: req.params.id },
+      include: {
+        founder: { select: { ...userSelect, bio:true } },
+        coFounders: true,
+        milestones: { orderBy: { createdAt: 'asc' } },
+        interests: {
+          include: {
+            user: { select: { id:true, name:true, username:true, avatar:true, role:true } },
+          },
+          orderBy: { createdAt: 'desc' },
         },
-      }),
-      prisma.startup.count({ where }),
-    ]);
-    res.json({ startups, total });
+        _count: { select: { interests:true } },
+      },
+    });
+    if (!startup) return res.status(404).json({ error: 'Startup not found' });
+    res.json({ startup });
   } catch(err) { next(err); }
 };
 
