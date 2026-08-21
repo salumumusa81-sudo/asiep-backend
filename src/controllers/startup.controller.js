@@ -38,7 +38,7 @@ const getStartup = async (req, res, next) => {
         coFounders: { include: { user: { select: userSelect } } },
         milestones: { orderBy: { createdAt: 'asc' } },
         project: { select: { id:true, title:true, description:true } },
-        _count: { select: { investorInterests:true } },
+        _count: { select: { interests:true } },
       },
     });
     if (!startup) return res.status(404).json({ error: 'Startup haipatikani' });
