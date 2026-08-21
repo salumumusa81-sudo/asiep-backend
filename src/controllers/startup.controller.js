@@ -1,49 +1,78 @@
 const prisma = require('../config/db');
-
 const userSelect = { id:true, name:true, username:true, avatar:true, university:true };
 
-// Get all startups
+// ── GET ALL STARTUPS ──────────────────────────────────────────────────────────
+const getStartups = async (req, res, next) => {
+  try {
+    const { stage, sector, page=1, limit=12 } = req.query;
+    const skip = (Number(page)-1) * Number(limit);
+    const where = {
+      isActive: true,
+      ...(stage && stage!=='ALL' && { stage }),
+      ...(sector && { sector }),
+    };
+    const [startups, total] = await Promise.all([
+      prisma.startup.findMany({
+        where, skip, take: Number(limit),
+        orderBy: { createdAt: 'desc' },
+        include: {
+          founder: { select: userSelect },
+          coFounders: true,
+          _count: { select: { milestones: true, interests: true } },
+        },
+      }),
+      prisma.startup.count({ where }),
+    ]);
+    res.json({ startups, total });
+  } catch(err) { next(err); }
+};
 
-
-// Get single startup
+// ── GET SINGLE STARTUP ────────────────────────────────────────────────────────
 const getStartup = async (req, res, next) => {
   try {
     const startup = await prisma.startup.findUnique({
       where: { id: req.params.id },
       include: {
         founder: { select: { ...userSelect, bio:true } },
-        coFounders: { include: { user: { select: userSelect } } },
+        coFounders: true,
         milestones: { orderBy: { createdAt: 'asc' } },
-        project: { select: { id:true, title:true, description:true } },
+        interests: {
+          include: {
+            user: { select: { id:true, name:true, username:true, avatar:true, role:true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
         _count: { select: { interests:true } },
       },
     });
-    if (!startup) return res.status(404).json({ error: 'Startup haipatikani' });
+    if (!startup) return res.status(404).json({ error: 'Startup not found' });
     res.json({ startup });
   } catch(err) { next(err); }
 };
 
-// Create startup
+// ── CREATE STARTUP ────────────────────────────────────────────────────────────
 const createStartup = async (req, res, next) => {
   try {
     const { name, tagline, description, stage, sector, country, website, fundingGoal, equity } = req.body;
-    if (!name||!tagline||!description) return res.status(400).json({ error: 'Jina, tagline, na maelezo vinahitajika' });
+    if (!name||!tagline||!description) return res.status(400).json({ error: 'Name, tagline, and description are required' });
 
     const startup = await prisma.startup.create({
       data: {
-  name, tagline, description,
-  stage: stage||'IDEA', sector, country,
-  website, fundingGoal, equity,
-  founderId: req.user.id,
+        name, tagline, description,
+        stage: stage||'IDEA', sector, country,
+        website: website||null,
+        fundingGoal: fundingGoal ? Number(fundingGoal) : null,
+        equity: equity ? Number(equity) : null,
+        founderId: req.user.id,
         milestones: {
-  create: [
-    { title:'Build MVP', achievedAt: new Date(Date.now() + 90*24*60*60*1000) },
-    { title:'Get first 100 users', achievedAt: new Date(Date.now() + 180*24*60*60*1000) },
-    { title:'Validate first revenue', achievedAt: new Date(Date.now() + 270*24*60*60*1000) },
-    { title:'Apply for first funding', achievedAt: new Date(Date.now() + 365*24*60*60*1000) },
-    { title:'Get seed round investors', achievedAt: new Date(Date.now() + 540*24*60*60*1000) },
-  ],
-},
+          create: [
+            { title:'Build MVP', achievedAt: new Date(Date.now() + 90*24*60*60*1000) },
+            { title:'Get first 100 users', achievedAt: new Date(Date.now() + 180*24*60*60*1000) },
+            { title:'Validate first revenue', achievedAt: new Date(Date.now() + 270*24*60*60*1000) },
+            { title:'Apply for first funding', achievedAt: new Date(Date.now() + 365*24*60*60*1000) },
+            { title:'Get seed round investors', achievedAt: new Date(Date.now() + 540*24*60*60*1000) },
+          ],
+        },
       },
       include: {
         founder: { select: userSelect },
@@ -51,59 +80,63 @@ const createStartup = async (req, res, next) => {
       },
     });
 
-    // Notification
-    await prisma.notification.create({
-      data: {
-        userId: req.user.id, type:'STARTUP',
-        message:`🚀 Your startup "${name}" has been registered on ASIEP Launchpad! Investors can now discover you.`,
-        link: `/launchpad/${startup.id}`,
-      },
-    });
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: req.user.id, type:'STARTUP',
+          message:`🚀 Your startup "${name}" has been registered on ASIEP Launchpad! Investors can now discover you.`,
+          link: `/launchpad`,
+        },
+      });
+    } catch(e) {}
 
-    res.status(201).json({ message:'Startup registered successfully! 🚀', startup });
+    res.status(201).json({ message:'Startup registered successfully!', startup });
   } catch(err) { next(err); }
 };
 
-// Update milestone
+// ── UPDATE MILESTONE ──────────────────────────────────────────────────────────
 const updateMilestone = async (req, res, next) => {
   try {
     const { status } = req.body;
     const milestone = await prisma.startupMilestone.update({
       where: { id: req.params.milestoneId },
-      data: { status, completedAt: status==='COMPLETED' ? new Date() : null },
+      data: { status },
     });
     res.json({ milestone });
   } catch(err) { next(err); }
 };
 
-// Express investor interest
+// ── EXPRESS INTEREST ──────────────────────────────────────────────────────────
 const expressInterest = async (req, res, next) => {
   try {
     const { message, amount } = req.body;
-    const startup = await prisma.startup.findUnique({ where: { id:req.params.id } });
-    if (!startup) return res.status(404).json({ error: 'Startup haipatikani' });
+    const startup = await prisma.startup.findUnique({ where: { id: req.params.id } });
+    if (!startup) return res.status(404).json({ error: 'Startup not found' });
 
     const interest = await prisma.investorInterest.create({
-      data: { startupId:req.params.id, userId:req.user.id, message, amount },
-    });
-
-    // Notify founder
-    await prisma.notification.create({
       data: {
-        userId: startup.founderId, type:'INVESTOR',
-        message:`💰 An investor has expressed interest in "${startup.name}"! ${amount?`Amount: $${Number(amount).toLocaleString()}`:''}`,
-        link: `/launchpad/${startup.id}`,
+        startupId: req.params.id,
+        userId: req.user.id,
+        message,
+        amount: amount ? Number(amount) : null,
       },
     });
 
-    res.status(201).json({ message:'Nia ya uwekezaji imetumwa!', interest });
-  } catch(err) {
-    if (err.code==='P2002') return res.status(409).json({ error:'Tayari umetoa nia kwa startup hii' });
-    next(err);
-  }
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: startup.founderId, type:'INVESTOR',
+          message:`💰 An investor has expressed interest in "${startup.name}"! ${amount?`Amount: $${Number(amount).toLocaleString()}`:''}`,
+          link: `/launchpad`,
+        },
+      });
+    } catch(e) {}
+
+    res.status(201).json({ message:'Interest sent successfully!', interest });
+  } catch(err) { next(err); }
 };
 
-// Get my startups
+// ── GET MY STARTUPS ───────────────────────────────────────────────────────────
 const getMyStartups = async (req, res, next) => {
   try {
     const startups = await prisma.startup.findMany({
