@@ -35,7 +35,7 @@ const getStartup = async (req, res, next) => {
       include: {
         founder: { select: { ...userSelect, bio:true } },
         coFounders: true,
-        milestones: { orderBy: { createdAt: 'asc' } },
+        milestones: { orderBy: { achievedAt: 'asc' } },
         interests: {
           include: {
             user: { select: { id:true, name:true, username:true, avatar:true, role:true } },
