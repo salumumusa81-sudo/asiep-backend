@@ -3,27 +3,7 @@ const prisma = require('../config/db');
 const userSelect = { id:true, name:true, username:true, avatar:true, university:true };
 
 // Get all startups
-const getStartup = async (req, res, next) => {
-  try {
-    const startup = await prisma.startup.findUnique({
-      where: { id: req.params.id },
-      include: {
-        founder: { select: { ...userSelect, bio:true } },
-        coFounders: true,
-        milestones: { orderBy: { createdAt: 'asc' } },
-        interests: {
-          include: {
-            user: { select: { id:true, name:true, username:true, avatar:true, role:true } },
-          },
-          orderBy: { createdAt: 'desc' },
-        },
-        _count: { select: { interests:true } },
-      },
-    });
-    if (!startup) return res.status(404).json({ error: 'Startup not found' });
-    res.json({ startup });
-  } catch(err) { next(err); }
-};
+
 
 // Get single startup
 const getStartup = async (req, res, next) => {
