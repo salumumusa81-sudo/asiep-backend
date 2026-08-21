@@ -131,9 +131,6 @@ const getMyStartups = async (req, res, next) => {
   try {
     const startups = await prisma.startup.findMany({
       where: { founderId: req.user.id },
-      include: {
-        milestones: { orderBy: { createdAt:'asc' } },
-      },
       orderBy: { createdAt:'desc' },
     });
     res.json({ startups });
