@@ -133,7 +133,7 @@ const getMyStartups = async (req, res, next) => {
       where: { founderId: req.user.id },
       include: {
         milestones: { orderBy: { createdAt:'asc' } },
-        _count: { select: { investorInterests:true } },
+        _count: { select: { interests:true } },
       },
       orderBy: { createdAt:'desc' },
     });
