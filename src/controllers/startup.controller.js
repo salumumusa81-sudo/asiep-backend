@@ -107,7 +107,7 @@ const expressInterest = async (req, res, next) => {
     if (!startup) return res.status(404).json({ error: 'Startup haipatikani' });
 
     const interest = await prisma.investorInterest.create({
-      data: { startupId:req.params.id, investorId:req.user.id, message, amount },
+      data: { startupId:req.params.id, userId:req.user.id, message, amount },
     });
 
     // Notify founder
