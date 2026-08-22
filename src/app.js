@@ -68,6 +68,7 @@ app.use('/api/startups',      require('./routes/startup.routes'));
 app.use('/api/tanzanite',     require('./routes/tanzanite.routes'));
 app.use('/api/admin',         require('./routes/admin.routes'));
 app.use('/api/messaging',     require('./routes/messaging.routes'));
+app.use('/api/mentors', require('./routes/mentor.routes'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'OK', platform: 'ASIEP', version: '1.0.0' }));
 app.use(errorHandler);
