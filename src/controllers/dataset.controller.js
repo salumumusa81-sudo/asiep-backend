@@ -92,7 +92,7 @@ const dataset = await prisma.dataset.create({
       data: users.map(u=>({
         userId: u.id,
         type: 'DATASET',
-        message: `🗄️ Dataset mpya: "${name}" imeongezwa na ${req.user.name}!`,
+        message: `🗄️ New dataset: "${title}" added by ${req.user.name}!`,
         link: '/datasets',
       })),
       skipDuplicates: true,
