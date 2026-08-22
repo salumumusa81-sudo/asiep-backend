@@ -118,10 +118,7 @@ const downloadDataset = async (req, res, next) => {
     }
 
     // Increment downloads
-    await prisma.dataset.update({
-      where: { id:req.params.id },
-      data: { downloads:{ increment:1 } },
-    });
+   
 
     res.json({ message:'Download imeanzishwa!', downloadUrl:dataset.downloadUrl });
   } catch(err) { next(err); }
@@ -147,9 +144,9 @@ const requestAccess = async (req, res, next) => {
     // Notify contributor
     await prisma.notification.create({
       data: {
-        userId: dataset.contributorId,
+        userId: dataset.uploaderId,
         type: 'DATASET_REQUEST',
-        message: `🔐 ${req.user.name} anaomba ruhusa ya "${dataset.name}"`,
+        message: `🔍 ${req.user.name} is requesting access to "${dataset.title}"`,
         link: '/datasets',
       },
     });
@@ -189,10 +186,10 @@ const rateDataset = async (req, res, next) => {
 const getMyDatasets = async (req, res, next) => {
   try {
     const datasets = await prisma.dataset.findMany({
-      where: { contributorId:req.user.id },
-      include: {
-        _count: { select:{ ratings:true, requests:true } },
-      },
+      where: { uploaderId:req.user.id },
+include: {
+  _count: { select:{ ratings:true, accessRequests:true } },
+},
       orderBy: { createdAt:'desc' },
     });
     res.json({ datasets });
