@@ -7,12 +7,12 @@ const getDatasets = async (req, res, next) => {
     const skip = (Number(page)-1) * Number(limit);
 
     const where = {
-      isPublished: true,
+      isPublic: true,
       ...(search && {
-        OR: [
-          { name: { contains: search, mode:'insensitive' } },
-          { description: { contains: search, mode:'insensitive' } },
-        ],
+       OR: [
+  { title: { contains: search, mode:'insensitive' } },
+  { description: { contains: search, mode:'insensitive' } },
+],
       }),
       ...(category && category!=='All' && { category }),
       ...(access && access!=='All' && { access }),
@@ -23,8 +23,8 @@ const getDatasets = async (req, res, next) => {
         where, skip, take: Number(limit),
         orderBy: { downloads: 'desc' },
         include: {
-          contributor: { select:{ id:true, name:true, username:true, university:true } },
-          _count: { select:{ ratings:true, requests:true } },
+          uploader: { select:{ id:true, name:true, username:true, university:true } },
+          _count: { select:{ ratings:true, accessRequests:true } },
         },
       }),
       prisma.dataset.count({ where }),
