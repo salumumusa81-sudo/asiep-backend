@@ -58,15 +58,7 @@ const getDataset = async (req, res, next) => {
 // ── CREATE DATASET ────────────────────────────────────────────────────────────
 const createDataset = async (req, res, next) => {
   try {
-    const {
-      name, description, category, tags, size, format,
-      language, license, access, downloadUrl, sourceUrl, records
-    } = req.body;
-
-    if (!name||!description||!category) {
-      return res.status(400).json({ error:'Jaza sehemu zote muhimu' });
-    }
-
+    
     const {
   title, description, category, size, format,
   language, license, isPublic, downloadUrl
