@@ -67,23 +67,27 @@ const createDataset = async (req, res, next) => {
       return res.status(400).json({ error:'Jaza sehemu zote muhimu' });
     }
 
-    const dataset = await prisma.dataset.create({
-      data: {
-        name, description, category,
-        tags: tags||[],
-        size: size||null,
-        format: format||null,
-        language: language||null,
-        license: license||'MIT',
-        access: access||'FREE',
-        downloadUrl: downloadUrl||null,
-        sourceUrl: sourceUrl||null,
-        records: records ? Number(records) : null,
-        contributorId: req.user.id,
-      },
+    const {
+  title, description, category, size, format,
+  language, license, isPublic, downloadUrl
+} = req.body;
+if (!title||!description||!category) {
+  return res.status(400).json({ error:'Title, description and category are required' });
+}
+const dataset = await prisma.dataset.create({
+  data: {
+    title, description, category,
+    size: size||null,
+    format: format||null,
+    language: language||null,
+    license: license||'CC BY 4.0',
+    isPublic: isPublic !== false,
+    downloadUrl: downloadUrl||null,
+    uploaderId: req.user.id,
+  },
       include: {
-        contributor: { select:{ id:true, name:true, username:true } },
-      },
+  uploader: { select:{ id:true, name:true, username:true } },
+},
     });
 
     // Notify all users
