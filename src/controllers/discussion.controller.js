@@ -11,7 +11,7 @@ const getThreads = async (req, res, next) => {
       where: { challengeId },
       include: {
         author: { select: { id:true, name:true, username:true, university:true, role:true } },
-        _count: { select: { replies:true, threadVotes:true } },
+        _count: { select: { replies:true, votes:true } },
       },
       orderBy: filter === 'top'
         ? [{ isPinned:'desc' }, { upvotes:'desc' }]
