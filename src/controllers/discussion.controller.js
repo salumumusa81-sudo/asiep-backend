@@ -53,25 +53,7 @@ const getThread = async (req, res, next) => {
     if (!thread) return res.status(404).json({ error: 'Thread not found' });
 
     // Check kama user amevote
-    let userVotedThread = false;
-    let userVotedReplies = [];
-
-    if (userId) {
-      const threadVote = await prisma.threadVote.findUnique({
-        where: { threadId_userId: { threadId, userId } },
-      });
-      userVotedThread = !!threadVote;
-
-      const replyIds = thread.replies.map(r => r.id);
-      if (replyIds.length > 0) {
-        const votes = await prisma.replyVote.findMany({
-          where: { replyId: { in: replyIds }, userId },
-        });
-        userVotedReplies = votes.map(v => v.replyId);
-      }
-    }
-
-    res.json({ thread, userVotedThread, userVotedReplies });
+    res.json({ thread, userVotedThread: false, userVotedReplies: [] });
   } catch(err) { next(err); }
 };
 
