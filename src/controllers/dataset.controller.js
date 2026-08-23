@@ -162,23 +162,15 @@ const requestAccess = async (req, res, next) => {
 const rateDataset = async (req, res, next) => {
   try {
     const { rating, review } = req.body;
-    if (!rating||rating<1||rating>5) return res.status(400).json({ error:'Rating lazima iwe 1-5' });
-
+    if (!rating||rating<1||rating>5) return res.status(400).json({ error:'Rating must be 1-5' });
     await prisma.datasetRating.upsert({
       where: { datasetId_userId:{ datasetId:req.params.id, userId:req.user.id } },
       update: { rating:Number(rating), review:review||null },
       create: { datasetId:req.params.id, userId:req.user.id, rating:Number(rating), review:review||null },
     });
-
-    // Update average rating
     const ratings = await prisma.datasetRating.findMany({ where:{ datasetId:req.params.id } });
     const avg = ratings.reduce((s,r)=>s+r.rating,0)/ratings.length;
-    await prisma.dataset.update({
-      where:{ id:req.params.id },
-      data:{ stars: Math.round(avg*10)/10 },
-    });
-
-    res.json({ message:'Asante kwa rating yako!', avgRating:avg });
+    res.json({ message:'Rating submitted!', avgRating:avg });
   } catch(err) { next(err); }
 };
 
