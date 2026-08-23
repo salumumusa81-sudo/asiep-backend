@@ -41,15 +41,16 @@ const getThread = async (req, res, next) => {
         replies: {
           include: {
             author: { select: { id:true, name:true, username:true, university:true, role:true } },
-            _count: { select: { replyVotes:true } },
+            __count: { select: { votes:true } },
+
           },
-          orderBy: [{ isAnswer:'desc' }, { upvotes:'desc' }, { createdAt:'asc' }],
+          orderBy: [{ createdAt:'asc' }],
         },
-        _count: { select: { replies:true, threadVotes:true } },
+        _count: { select: { replies:true, votes:true } },
       },
     });
 
-    if (!thread) return res.status(404).json({ error: 'Thread haipatikani' });
+    if (!thread) return res.status(404).json({ error: 'Thread not found' });
 
     // Check kama user amevote
     let userVotedThread = false;
