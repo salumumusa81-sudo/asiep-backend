@@ -41,7 +41,7 @@ const getThread = async (req, res, next) => {
         replies: {
           include: {
             author: { select: { id:true, name:true, username:true, university:true, role:true } },
-            __count: { select: { votes:true } },
+            _count: { select: { votes:true } },
 
           },
           orderBy: [{ createdAt:'asc' }],
