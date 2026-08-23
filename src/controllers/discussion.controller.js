@@ -104,7 +104,7 @@ const createThread = async (req, res, next) => {
         content: content.trim(),
         challengeId,
         authorId: req.user.id,
-        isAnnouncement: false,
+        
       },
       include: {
         author: { select: { id:true, name:true, username:true, role:true } },
