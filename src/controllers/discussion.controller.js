@@ -15,7 +15,7 @@ const getThreads = async (req, res, next) => {
       },
       orderBy: filter === 'top'
         ? [{ isPinned:'desc' }, { upvotes:'desc' }]
-        : [{ isPinned:'desc' }, { isAnnouncement:'desc' }, { createdAt:'desc' }],
+        : [{ isPinned:'desc' }, { createdAt:'desc' }],
     });
 
     res.json({ threads });
@@ -81,20 +81,20 @@ const createThread = async (req, res, next) => {
     const { title, content, isAnnouncement } = req.body;
 
     if (!title?.trim() || !content?.trim()) {
-      return res.status(400).json({ error: 'Jaza kichwa na maudhui' });
+      return res.status(400).json({ error: 'Title and content are required' });
     }
     if (title.length > 200) {
-      return res.status(400).json({ error: 'Kichwa ni kirefu sana (max herufi 200)' });
+      return res.status(400).json({ error: 'Title is too long (max herufi 200)' });
     }
 
     const challenge = await prisma.challenge.findUnique({
       where: { id: challengeId },
       select: { id:true, title:true },
     });
-    if (!challenge) return res.status(404).json({ error: 'Challenge haipatikani' });
+    if (!challenge) return res.status(404).json({ error: 'Challenge not found' });
 
     // Announcement — Company/Admin tu
-    if (isAnnouncement && !['COMPANY','ADMIN'].includes(req.user.role)) {
+     {
       return res.status(403).json({ error: 'Announcement ni kwa Company au Admin tu' });
     }
 
