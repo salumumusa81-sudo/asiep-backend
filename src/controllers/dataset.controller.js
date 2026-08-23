@@ -23,9 +23,10 @@ const getDatasets = async (req, res, next) => {
         where, skip, take: Number(limit),
         orderBy: { downloads: 'desc' },
         include: {
-          uploader: { select:{ id:true, name:true, username:true, university:true } },
-          _count: { select:{ ratings:true, accessRequests:true } },
-        },
+  uploader: { select:{ id:true, name:true, username:true, university:true } },
+  ratings: { select:{ rating:true } },
+  _count: { select:{ ratings:true, accessRequests:true } },
+},
       }),
       prisma.dataset.count({ where }),
     ]);
