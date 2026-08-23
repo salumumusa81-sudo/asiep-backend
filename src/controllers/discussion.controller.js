@@ -129,15 +129,15 @@ const addReply = async (req, res, next) => {
     const { threadId } = req.params;
     const { content } = req.body;
 
-    if (!content?.trim()) return res.status(400).json({ error: 'Andika jibu kwanza' });
-    if (content.length > 5000) return res.status(400).json({ error: 'Jibu ni refu sana' });
+    if (!content?.trim()) return res.status(400).json({ error: 'Write a reply first' });
+    if (content.length > 5000) return res.status(400).json({ error: 'Reply is too long' });
 
     const thread = await prisma.discussionThread.findUnique({
       where: { id: threadId },
-      include: { challenge: { select: { title:true } } },
+      
     });
-    if (!thread) return res.status(404).json({ error: 'Thread haipatikani' });
-    if (thread.isLocked) return res.status(403).json({ error: 'Thread imefungwa — haiwezi kujibiwa' });
+    if (!thread) return res.status(404).json({ error: 'Thread not found' });
+    if (thread.isLocked) return res.status(403).json({ error: 'Thread is locked — haiwezi kujibiwa' });
 
     const reply = await prisma.discussionReply.create({
       data: {
@@ -147,7 +147,7 @@ const addReply = async (req, res, next) => {
       },
       include: {
         author: { select: { id:true, name:true, username:true, university:true, role:true } },
-        _count: { select: { replyVotes:true } },
+       _count: { select: { votes:true } },
       },
     });
 
@@ -157,7 +157,7 @@ const addReply = async (req, res, next) => {
         data: {
           userId: thread.authorId,
           type: 'DISCUSSION_REPLY',
-          message: `💬 ${req.user.name} amejibu thread yako: "${thread.title}"`,
+          message: `💬 ${req.user.name} replied to your thread: "${thread.title}"`,
           link: `/challenges/${thread.challengeId}/discussion/${threadId}`,
         },
       });
@@ -166,7 +166,7 @@ const addReply = async (req, res, next) => {
     // Points
     try { await addPoints(req.user.id, 'COMMENT', `Ulijibu thread: ${thread.title}`); } catch(e) {}
 
-    res.status(201).json({ message: 'Jibu limeongezwa!', reply });
+    res.status(201).json({ message: 'Reply added!', reply });
   } catch(err) { next(err); }
 };
 
