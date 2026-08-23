@@ -108,7 +108,7 @@ const createThread = async (req, res, next) => {
       },
       include: {
         author: { select: { id:true, name:true, username:true, role:true } },
-        _count: { select: { replies:true, threadVotes:true } },
+        _count: { select: { replies:true, votes:true } },
       },
     });
 
