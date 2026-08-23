@@ -95,7 +95,7 @@ const createThread = async (req, res, next) => {
 
     // Announcement — Company/Admin tu
      {
-      return res.status(403).json({ error: 'Announcement ni kwa Company au Admin tu' });
+      
     }
 
     const thread = await prisma.discussionThread.create({
@@ -104,7 +104,7 @@ const createThread = async (req, res, next) => {
         content: content.trim(),
         challengeId,
         authorId: req.user.id,
-        isAnnouncement: isAnnouncement && ['COMPANY','ADMIN'].includes(req.user.role),
+        isAnnouncement: false,
       },
       include: {
         author: { select: { id:true, name:true, username:true, role:true } },
