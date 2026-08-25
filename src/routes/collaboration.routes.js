@@ -195,4 +195,89 @@ router.put('/:id/members/:userId', protect, async (req, res, next) => {
   } catch(err) { next(err); }
 });
 
+// ── TASKS ─────────────────────────────────────────────────────────────────────
+
+// Get tasks for a collaboration
+router.get('/:id/tasks', protect, async (req, res, next) => {
+  try {
+    const tasks = await prisma.collaborationTask.findMany({
+      where: { collaborationId: req.params.id },
+      include: {
+        assignee: { select: { id:true, name:true, username:true, avatar:true } },
+        createdBy: { select: { id:true, name:true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    res.json({ tasks });
+  } catch(err) { next(err); }
+});
+
+// Create task
+router.post('/:id/tasks', protect, async (req, res, next) => {
+  try {
+    const { title, description, assigneeId, deadline, priority } = req.body;
+    if (!title?.trim()) return res.status(400).json({ error: 'Title is required' });
+    const task = await prisma.collaborationTask.create({
+      data: {
+        title: title.trim(),
+        description: description || null,
+        assigneeId: assigneeId || null,
+        deadline: deadline ? new Date(deadline) : null,
+        priority: priority || 'MEDIUM',
+        collaborationId: req.params.id,
+        createdById: req.user.id,
+      },
+      include: {
+        assignee: { select: { id:true, name:true, username:true, avatar:true } },
+        createdBy: { select: { id:true, name:true } },
+      },
+    });
+    // Notify assignee
+    if (assigneeId && assigneeId !== req.user.id) {
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: assigneeId,
+            type: 'COLLABORATION',
+            message: `📋 You have been assigned a task: "${title}"`,
+            link: '/collaborations',
+          },
+        });
+      } catch(e) {}
+    }
+    res.status(201).json({ message: 'Task created!', task });
+  } catch(err) { next(err); }
+});
+
+// Update task status
+router.put('/:id/tasks/:taskId', protect, async (req, res, next) => {
+  try {
+    const { status, title, description, assigneeId, deadline, priority } = req.body;
+    const task = await prisma.collaborationTask.update({
+      where: { id: req.params.taskId },
+      data: {
+        ...(status && { status }),
+        ...(title && { title }),
+        ...(description !== undefined && { description }),
+        ...(assigneeId !== undefined && { assigneeId }),
+        ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
+        ...(priority && { priority }),
+      },
+      include: {
+        assignee: { select: { id:true, name:true, username:true, avatar:true } },
+        createdBy: { select: { id:true, name:true } },
+      },
+    });
+    res.json({ message: 'Task updated!', task });
+  } catch(err) { next(err); }
+});
+
+// Delete task
+router.delete('/:id/tasks/:taskId', protect, async (req, res, next) => {
+  try {
+    await prisma.collaborationTask.delete({ where: { id: req.params.taskId } });
+    res.json({ message: 'Task deleted!' });
+  } catch(err) { next(err); }
+});
+
 module.exports = router;
