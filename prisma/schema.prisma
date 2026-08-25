@@ -54,6 +54,8 @@ model User {
   reviewedEntries   ChallengeEntry[] @relation("ReviewedEntries")
   workspaceFiles    WorkspaceFile[]
   datasets          Dataset[]
+  collaborationsLed     Collaboration[]       @relation("CollaborationLeader")  // ← HAPA
+  collaborationMembers  CollaborationMember[]  
 
   @@map("users")
 }
@@ -595,6 +597,34 @@ model StartupCoFounder {
   startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
 
   @@map("startup_cofounders")
+}
+model Collaboration {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+  category    String
+  status      String   @default("RECRUITING")
+  deadline    DateTime?
+  maxMembers  Int      @default(5)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  leaderId    String
+  leader      User     @relation("CollaborationLeader", fields: [leaderId], references: [id], onDelete: Cascade)
+  members     CollaborationMember[]
+  @@map("collaborations")
+}
+
+model CollaborationMember {
+  id              String        @id @default(uuid())
+  role            String        @default("Member")
+  status          String        @default("PENDING")
+  joinedAt        DateTime      @default(now())
+  collaborationId String
+  userId          String
+  collaboration   Collaboration @relation(fields: [collaborationId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([collaborationId, userId])
+  @@map("collaboration_members")
 }
 
 model StartupMilestone {
