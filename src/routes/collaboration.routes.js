@@ -195,6 +195,29 @@ router.put('/:id/members/:userId', protect, async (req, res, next) => {
   } catch(err) { next(err); }
 });
 
+// Get single collaboration
+router.get('/:id', protect, async (req, res, next) => {
+  try {
+    const collaboration = await prisma.collaboration.findUnique({
+      where: { id: req.params.id },
+      include: {
+        leader: { select: { id:true, name:true, username:true, avatar:true, university:true } },
+        members: {
+          include: { user: { select: { id:true, name:true, username:true, avatar:true, university:true } } },
+        },
+        tasks: {
+          include: {
+            assignee: { select: { id:true, name:true } },
+            createdBy: { select: { id:true, name:true } },
+          },
+        },
+      },
+    });
+    if (!collaboration) return res.status(404).json({ error: 'Collaboration not found' });
+    res.json({ collaboration });
+  } catch(err) { next(err); }
+});
+
 // ── TASKS ─────────────────────────────────────────────────────────────────────
 
 // Get tasks for a collaboration
