@@ -205,12 +205,6 @@ router.get('/:id', protect, async (req, res, next) => {
         members: {
           include: { user: { select: { id:true, name:true, username:true, avatar:true, university:true } } },
         },
-        tasks: {
-          include: {
-            assignee: { select: { id:true, name:true } },
-            createdBy: { select: { id:true, name:true } },
-          },
-        },
       },
     });
     if (!collaboration) return res.status(404).json({ error: 'Collaboration not found' });
