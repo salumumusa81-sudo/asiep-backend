@@ -624,6 +624,7 @@ model Collaboration {
   description String   @db.Text
   category    String
   status      String   @default("RECRUITING")
+  githubRepo    String?
   deadline    DateTime?
   maxMembers  Int      @default(5)
   createdAt   DateTime @default(now())
