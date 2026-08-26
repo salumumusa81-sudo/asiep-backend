@@ -64,18 +64,19 @@ router.get('/invitations', protect, async (req, res, next) => {
 // Create collaboration
 router.post('/', protect, async (req, res, next) => {
   try {
-    const { title, description, category, deadline, maxMembers, rolesNeeded } = req.body;
+    const { title, description, category, deadline, maxMembers, githubRepo } = req.body;
     if (!title || !description || !category) {
       return res.status(400).json({ error: 'Title, description and category are required' });
     }
     const collaboration = await prisma.collaboration.create({
-      data: {
-        title, description, category,
-        deadline: deadline ? new Date(deadline) : null,
-        maxMembers: maxMembers ? Number(maxMembers) : 5,
-        leaderId: req.user.id,
-        status: 'RECRUITING',
-      },
+  data: {
+    title, description, category,
+    deadline: deadline ? new Date(deadline) : null,
+    maxMembers: maxMembers ? Number(maxMembers) : 5,
+    githubRepo: githubRepo || null,
+    leaderId: req.user.id,
+    status: 'RECRUITING',
+  },
       include: {
         leader: { select: userSelect },
         members: true,
