@@ -146,5 +146,42 @@ const getMyStartups = async (req, res, next) => {
     res.json({ startups });
   } catch(err) { next(err); }
 };
+// ── UPDATE STARTUP ────────────────────────────────────────────────────────────
+const updateStartup = async (req, res, next) => {
+  try {
+    const { name, tagline, description, stage, sector, country, website, fundingGoal, equity } = req.body;
+    const startup = await prisma.startup.findUnique({ where: { id: req.params.id } });
+    if (!startup) return res.status(404).json({ error: 'Startup not found' });
+    if (startup.founderId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
+    const updated = await prisma.startup.update({
+      where: { id: req.params.id },
+      data: {
+        ...(name && { name }),
+        ...(tagline && { tagline }),
+        ...(description && { description }),
+        ...(stage && { stage }),
+        ...(sector && { sector }),
+        ...(country && { country }),
+        ...(website !== undefined && { website }),
+        ...(fundingGoal !== undefined && { fundingGoal: fundingGoal ? Number(fundingGoal) : null }),
+        ...(equity !== undefined && { equity: equity ? Number(equity) : null }),
+      },
+    });
+    res.json({ message: 'Startup updated!', startup: updated });
+  } catch(err) { next(err); }
+};
 
-module.exports = { getStartups, getStartup, createStartup, updateMilestone, expressInterest, getMyStartups };
+// ── DELETE STARTUP ────────────────────────────────────────────────────────────
+const deleteStartup = async (req, res, next) => {
+  try {
+    const startup = await prisma.startup.findUnique({ where: { id: req.params.id } });
+    if (!startup) return res.status(404).json({ error: 'Startup not found' });
+    if (startup.founderId !== req.user.id && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    await prisma.startup.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Startup deleted!' });
+  } catch(err) { next(err); }
+};
+
+module.exports = { getStartups, getStartup, createStartup, updateMilestone, expressInterest, getMyStartups, updateStartup, deleteStartup };
