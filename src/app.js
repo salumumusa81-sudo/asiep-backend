@@ -17,6 +17,7 @@ const allowedOrigins = [
   'https://prismatic-nougat-a0b684.netlify.app',
   'https://singular-florentine-b71e8f.netlify.app',
   'https://leafy-treacle-fd7b52.netlify.app',
+  'https://jovial-strudel-4fe20f.netlify.app',
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
