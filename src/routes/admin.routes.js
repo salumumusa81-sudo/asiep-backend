@@ -9,18 +9,19 @@ router.get('/stats', async (req, res, next) => {
   try {
     const today = new Date(new Date().setHours(0,0,0,0));
     const [totalUsers, todayUsers, totalProjects, todayProjects, totalStartups,
-           totalGrants, totalApplications, totalBadges, todayBadges, usersByRole] = await Promise.all([
-      prisma.user.count(),
-      prisma.user.count({ where: { createdAt: { gte: today } } }),
-      prisma.project.count(),
-      prisma.project.count({ where: { createdAt: { gte: today } } }),
-      prisma.startup.count(),
-      prisma.sponsorGrant.count(),
-      prisma.grantApplication.count(),
-      prisma.userBadge.count(),
-      prisma.userBadge.count({ where: { earnedAt: { gte: today } } }),
-      prisma.user.groupBy({ by:['role'], _count:{ role:true } }),
-    ]);
+       totalGrants, totalApplications, totalBadges, todayBadges, usersByRole, totalDatasets] = await Promise.all([
+  prisma.user.count(),
+  prisma.user.count({ where: { createdAt: { gte: today } } }),
+  prisma.project.count(),
+  prisma.project.count({ where: { createdAt: { gte: today } } }),
+  prisma.startup.count(),
+  prisma.sponsorGrant.count(),
+  prisma.grantApplication.count(),
+  prisma.userBadge.count(),
+  prisma.userBadge.count({ where: { earnedAt: { gte: today } } }),
+  prisma.user.groupBy({ by:['role'], _count:{ role:true } }),
+  prisma.dataset.count(),
+]);
 
     const monthly = [];
     for (let i = 5; i >= 0; i--) {
@@ -39,12 +40,13 @@ router.get('/stats', async (req, res, next) => {
 
     res.json({
       stats: {
-        users: { total: totalUsers, today: todayUsers },
-        projects: { total: totalProjects, today: todayProjects },
-        startups: { total: totalStartups },
-        grants: { total: totalGrants, applications: totalApplications },
-        badges: { total: totalBadges, today: todayBadges },
-      },
+  users: { total: totalUsers, today: todayUsers },
+  projects: { total: totalProjects, today: todayProjects },
+  startups: { total: totalStartups },
+  grants: { total: totalGrants, applications: totalApplications },
+  badges: { total: totalBadges, today: todayBadges },
+  datasets: { total: totalDatasets },
+},
       usersByRole: usersByRole.map(r => ({ role: r.role, count: r._count.role })),
       monthly,
       recentUsers,
