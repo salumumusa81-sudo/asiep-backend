@@ -3,6 +3,7 @@ const { body } = require('express-validator');
 const { register, login, refreshToken, getMe } = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { validate } = require('../middleware/validate.middleware');
+const prisma = require('../config/db');
 
 router.post('/register', [
   body('name').trim().notEmpty().withMessage('Jina linahitajika'),
