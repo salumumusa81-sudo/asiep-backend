@@ -18,6 +18,8 @@ const allowedOrigins = [
   'https://singular-florentine-b71e8f.netlify.app',
   'https://leafy-treacle-fd7b52.netlify.app',
   'https://jovial-strudel-4fe20f.netlify.app',
+  'https://asiep.africa',
+'https://www.asiep.africa',
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
