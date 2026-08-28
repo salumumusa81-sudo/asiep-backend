@@ -58,6 +58,8 @@ createdTasks    CollaborationTask[] @relation("TaskCreator")
   datasets          Dataset[]
   collaborationsLed     Collaboration[]       @relation("CollaborationLeader")  // ← HAPA
   collaborationMembers  CollaborationMember[]  
+  resetToken        String?
+resetTokenExpiry  DateTime?
 
   @@map("users")
 }
