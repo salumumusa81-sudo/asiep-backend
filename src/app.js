@@ -20,6 +20,7 @@ const allowedOrigins = [
   'https://jovial-strudel-4fe20f.netlify.app',
   'https://asiep.africa',
 'https://www.asiep.africa',
+'https://astonishing-zuccutto-00ec29.netlify.app',
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
