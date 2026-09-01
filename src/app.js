@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+
 const { errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
@@ -31,27 +31,7 @@ app.use(cors({
 }));
 
 // ── Rate Limiting ─────────────────────────────────────────────────────────────
-// General limit
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500,
-  message: { error: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
 
-// Strict limit for auth routes
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50,
-  message: { error: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use('/api/', generalLimiter);
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
 
 // ── Body Parser ───────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
