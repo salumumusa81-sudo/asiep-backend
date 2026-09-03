@@ -60,20 +60,6 @@ app.use('/api/collaborations', require('./routes/collaboration.routes'));
 app.get('/api/health', (req, res) => res.json({ status: 'OK', platform: 'ASIEP', version: '1.0.0' }));
 app.use(errorHandler);
 
-// Temporary admin reset route - DELETE AFTER USE
-app.get('/api/reset-admin-temp-2026', async (req, res) => {
-  try {
-    const bcrypt = require('bcryptjs');
-    const prisma = require('./config/db');
-    const hashed = await bcrypt.hash('Kuntankinte2025!', 10);
-    await prisma.user.update({
-      where: { email: 'admin@asiep.africa' },
-      data: { password: hashed },
-    });
-    res.json({ success: true, message: 'Admin password reset!' });
-  } catch(err) {
-    res.json({ error: err.message });
-  }
-});
+
 
 module.exports = app;
